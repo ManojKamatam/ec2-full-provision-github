@@ -1,7 +1,6 @@
 AWSTemplateFormatVersion: "2010-09-09"
 
 Resources:
-
   VPC:
     Type: AWS::EC2::VPC
     Properties:
@@ -23,44 +22,12 @@ Resources:
         - Key: "Name"
           Value: "MySubnet"
 
-  InstanceProfile:
-    Type: AWS::IAM::InstanceProfile
-    Properties:
-      Path: "/"
-      Roles:
-        - !Ref EC2InstanceRole
-
-  EC2InstanceRole:
-    Type: AWS::IAM::Role
-    Properties:
-      AssumeRolePolicyDocument:
-        Version: "2012-10-17"
-        Statement:
-          - Effect: "Allow"
-            Principal:
-              Service:
-                - "ec2.amazonaws.com"
-            Action:
-              - "sts:AssumeRole"
-      Path: "/"
-      Policies:
-        - PolicyName: "vpc-subnet-creation"
-          PolicyDocument:
-            Version: "2012-10-17"
-            Statement:
-              - Effect: "Allow"
-                Action:
-                  - "ec2:CreateVpc"
-                  - "ec2:CreateSubnet"
-                Resource: "*"
-
   Instance:
     Type: AWS::EC2::Instance
     Properties:
       ImageId: ami-07caf9f60dd9b55bb
       InstanceType: t2.micro
       SubnetId: !Ref Subnet
-      IamInstanceProfile: !Ref InstanceProfile
       SecurityGroupIds:
         - !Ref SecurityGroup
 
