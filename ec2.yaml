@@ -1,7 +1,7 @@
 AWSTemplateFormatVersion: "2010-09-09"
 
 Resources:
-  VPC:
+  VPC1:
     Type: AWS::EC2::VPC
     Properties:
       CidrBlock: 10.0.0.0/16
@@ -11,12 +11,76 @@ Resources:
         - Key: "Name"
           Value: "MyVPC"
 
-  Subnet:
+  PublicSubnet1:
     Type: AWS::EC2::Subnet
     Properties:
-      VpcId: !Ref VPC
+      VpcId: !Ref VPC1
       CidrBlock: 10.0.1.0/24
-      AvailabilityZone: !Select [ 0, !GetAZs "" ]
+      MapPublicIpOnLaunch: true
+      Tags:
+        - Key: "Name"
+          Value: "PublicSubnet"
+
+  PrivateSubnet1:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC1
+      CidrBlock: 10.0.2.0/24
+      Tags:
+        - Key: "Name"
+          Value: "PrivateSubnet"
+
+  InternetGateway1:
+    Type: AWS::EC2::InternetGateway
+    Properties:
+      Tags:
+        - Key: "Name"
+          Value: "InternetGateway"
+
+  AttachGateway1:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      VpcId: !Ref VPC1
+      InternetGatewayId: !Ref InternetGateway1
+
+  PublicRouteTable1:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VPC1
+      Tags:
+        - Key: "Name"
+          Value: "PublicRouteTable"
+
+  PublicRoute1:
+    Type: AWS::EC2::Route
+    DependsOn: AttachGateway1
+    Properties:
+      RouteTableId: !Ref PublicRouteTable1
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref InternetGateway1
+
+  SubnetRouteTableAssociation1:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PublicSubnet1
+      RouteTableId: !Ref PublicRouteTable1
+
+  VPC2:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: 10.1.0.0/16
+      EnableDnsSupport: true
+      EnableDnsHostnames: true
+      Tags:
+        - Key: "Name"
+          Value: "MyVPC"
+
+  Subnet2:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC2
+      CidrBlock: 10.1.1.0/24
+      AvailabilityZone: !Select [0, !GetAZs ""]
       MapPublicIpOnLaunch: true
       Tags:
         - Key: "Name"
@@ -27,7 +91,7 @@ Resources:
     Properties:
       ImageId: ami-07caf9f60dd9b55bb
       InstanceType: t2.micro
-      SubnetId: !Ref Subnet
+      SubnetId: !Ref Subnet2
       SecurityGroupIds:
         - !Ref SecurityGroup
 
@@ -35,9 +99,24 @@ Resources:
     Type: AWS::EC2::SecurityGroup
     Properties:
       GroupDescription: My security group for my EC2 instance
-      VpcId: !Ref VPC
+      VpcId: !Ref VPC2
 
 Outputs:
+  VPC1Id:
+    Description: VPC1 ID
+    Value: !Ref VPC1
+  PublicSubnet1Id:
+    Description: Public Subnet1 ID
+    Value: !Ref PublicSubnet1
+  PrivateSubnet1Id:
+    Description: Private Subnet1 ID
+    Value: !Ref PrivateSubnet1
+  VPC2Id:
+    Description: VPC2 ID
+    Value: !Ref VPC2
+  Subnet2Id:
+    Description: Subnet2 ID
+    Value: !Ref Subnet2
   InstancePublicIp:
     Description: The public IP address of the instance
     Value: !GetAtt Instance.PublicIp
